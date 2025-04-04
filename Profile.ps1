@@ -248,14 +248,119 @@ function Get-ChildItemPretty {
     Write-Host ""
 }
 
-function Show-ThisIsFine {
-    <#
-    .SYNOPSIS
-        Displays the "This is fine" meme in the console. Alias: tif
-    #>
-    Write-Verbose "Running thisisfine.ps1"
-    Show-ColorScript -Name thisisfine
+function Invoke-CustomFastfetch {
+    $configPath = "$HOME/AppData/Local/fastfetch/config.jsonc"
+    $tempPokemonFile = "$env:TEMP\pokemon_temp.txt"
+    
+    # Try to find the Pokemon-ColorScripts.ps1 script in different locations
+    $possiblePaths = @(
+        "C:\Program Files\PokemonColorScripts\Pokemon-ColorScripts.ps1",
+        "$ENV:WindotsLocalRepo\pokemon-colorscripts\Pokemon-ColorScripts.ps1",
+        "$PSScriptRoot\Pokemon-ColorScripts.ps1"
+    )
+    
+    $pokemonScriptPath = $null
+    foreach ($path in $possiblePaths) {
+        if (Test-Path $path) {
+            $pokemonScriptPath = $path
+            break
+        }
+    }
+    
+    # Check if Pokemon script exists
+    if (-not $pokemonScriptPath) {
+        Write-Warning "Pokemon Color Scripts not found. Falling back to standard fastfetch."
+        fastfetch
+        return
+    }
+    
+    # Check if the config path exists, create directory if needed
+    $configDir = Split-Path -Parent $configPath
+    if (-not (Test-Path $configDir)) {
+        New-Item -ItemType Directory -Path $configDir -Force | Out-Null
+    }
+    
+    try {
+        # Use a simple approach with just the -Random parameter
+        # This should work reliably based on the help output
+        $randomGen = "1-8"  # All generations
+        
+        # Execute the command and capture output to file
+        & $pokemonScriptPath -Random  $randomGen | Out-File -FilePath $tempPokemonFile -ErrorAction Stop
+        
+        # Check if the file was created and has content
+        if (-not (Test-Path $tempPokemonFile) -or (Get-Item $tempPokemonFile).Length -eq 0) {
+            throw "Pokemon file was not created or is empty"
+        }
+        
+        # Read the existing config if it exists, otherwise create a new one
+        if (Test-Path $configPath) {
+            $config = Get-Content $configPath -Raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if (-not $config) {
+                $config = [PSCustomObject]@{}
+            }
+        } else {
+            $config = [PSCustomObject]@{}
+        }
+        
+        # Check if logo property exists and has the correct structure
+        if (-not $config.logo) {
+            $config | Add-Member -NotePropertyName logo -NotePropertyValue @{
+                source = $tempPokemonFile
+                type = "file"
+                padding = @{
+                    top = 1
+                    left = 3
+                }
+            } -Force
+        } else {
+            # Ensure the logo property has a source property
+            if (-not $config.logo.PSObject.Properties['source']) {
+                $config.logo | Add-Member -NotePropertyName source -NotePropertyValue $tempPokemonFile -Force
+            } else {
+                $config.logo.source = $tempPokemonFile
+            }
+            
+            # Ensure padding exists
+            if (-not $config.logo.PSObject.Properties['padding']) {
+                $config.logo | Add-Member -NotePropertyName padding -NotePropertyValue @{
+                    top = 1
+                    left = 3
+                } -Force
+            }
+        }
+        
+        # Save the modified config
+        $config | ConvertTo-Json -Depth 10 | Set-Content $configPath
+        
+        # Run fastfetch
+        fastfetch
+    }
+    catch {
+        Write-Warning "Failed to generate Pokemon: $_"
+        Write-Warning "Falling back to standard fastfetch."
+        fastfetch
+    }
+    finally {
+        # Clean up the temporary file
+        if (Test-Path $tempPokemonFile) {
+            Remove-Item -Path $tempPokemonFile -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
+
+# Override Clear-Host to refresh Pokemon when clearing the screen
+function global:Clear-Host {
+    # Call a reliable method to clear the screen instead of the original Clear-Host
+    [System.Console]::Clear()
+    
+    # Run fastfetch with a new random Pokemon
+    Invoke-CustomFastfetch
+}
+
+# Create aliases for cls and clear to use our custom Clear-Host function
+Set-Alias -Name cls -Value Clear-Host -Option AllScope -Force -Scope Global
+Set-Alias -Name clear -Value Clear-Host -Option AllScope -Force -Scope Global
 
 function Remove-ItemExtended {
     <#
@@ -345,4 +450,69 @@ Import-Module -Name CompletionPredictor
 if ([Environment]::GetCommandLineArgs().Contains("-NonInteractive")) {
     return
 }
-fastfetch
+Invoke-CustomFastfetch
+
+# Pokemon ColorScripts
+function Show-Pokemon {
+    [CmdletBinding(DefaultParameterSetName='Default')]
+    param(
+        [Parameter(ParameterSetName='Help')][switch]$Help,
+        [Parameter(ParameterSetName='List')][switch]$List,
+        [Parameter(ParameterSetName='Name')][string]$Name,
+        [Parameter(ParameterSetName='Name')][string]$Form,
+        [Parameter(ParameterSetName='Name')][switch]$NoTitle,
+        [Parameter(ParameterSetName='RandomOrName')][switch]$Shiny,
+        [Parameter(ParameterSetName='RandomOrName')][switch]$Big,
+        [Parameter(ParameterSetName='Random')][switch]$Random,
+        [Parameter(ParameterSetName='Random')][string]$RandomValue,
+        [Parameter(ParameterSetName='RandomNames')][string]$RandomByNames
+    )
+
+    $ScriptPath = "C:\Program Files\PokemonColorScripts\\Pokemon-ColorScripts.ps1"
+
+    # Build a hashtable of parameters to splat
+    $params = @{}
+
+    if ($Help) { $params.Add('Help', $true) }
+    if ($List) { $params.Add('List', $true) }
+    if ($Name) { $params.Add('Name', $Name) }
+    if ($Form) { $params.Add('Form', $Form) }
+    if ($NoTitle) { $params.Add('NoTitle', $true) }
+    if ($Shiny) { $params.Add('Shiny', $true) }
+    if ($Big) { $params.Add('Big', $true) }
+    
+    if ($Random) {
+        if ($RandomValue) {
+            $params.Add('Random', $RandomValue)
+        } else {
+            $params.Add('Random', "1-8")  # Default value
+        }
+    }
+    
+    if ($RandomByNames) { $params.Add('RandomByNames', $RandomByNames) }
+
+    # Execute the script with the parameters
+    & $ScriptPath @params
+}
+
+Set-Alias -Name pokemon-colorscripts -Value Show-Pokemon
+
+# Initialize Oh My Posh
+oh-my-posh --init --shell pwsh --config 'C:\Users\Death\AppData\Local\Programs\oh-my-posh\themes\easy-term.omp.json' | Invoke-Expression
+
+# Load Terminal-Icons module
+Import-Module -Name Terminal-Icons
+
+# Load PSReadLine module
+if ($host.Name -eq 'ConsoleHost') { Import-Module PSReadLine }
+
+# Configure PSReadLine
+Set-PSReadLineOption -PredictionSource History
+Set-PSReadLineOption -PredictionViewStyle ListView
+Set-PSReadLineOption -EditMode Windows
+Set-PSReadLineKeyHandler -Key UpArrow -Function HistorySearchBackward
+Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
+
+
+
+

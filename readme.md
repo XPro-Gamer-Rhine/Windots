@@ -1,4 +1,4 @@
- <p align="center"> 
+<p align="center"> 
   <a href="https://scottmckendry.tech">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://scottmckendry.tech/img/logo/icon2transparent.png">
@@ -23,17 +23,16 @@
   </a>
 </p>
 
-My personal Windows-friendly dotfiles. Supports automatic installation of dependencies and configuration of Windows Terminal, Neovim, PowerShell Core and more!
+My personal Windows-friendly dotfiles. Supports automatic installation of dependencies and configuration of Windows Terminal, PowerShell Core, WezTerm, Starship, Oh-My-Posh, and more!
 
 ## 🎉 Features
 
-- **Automated Dependency Installation:** Utilises [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [Chocolatey](https://chocolatey.org/) for streamlined installation of required dependencies. Checks and notifies pending software updates with a 📦 icon in the prompt.
-- **Automated Update Checks:** Regularly checks for updates using git. If updates are pending, an icon is displayed when starting a new PowerShell session.
-
-    ![image](https://github.com/scottmckendry/Windots/assets/39483124/e84d0294-5662-4d7c-b1ae-88a1f26ca9fd)
-
+- **One-Click Setup:** The enhanced Setup.ps1 script will automatically install and configure all necessary tools and modules.
+- **Automated Dependency Installation:** Utilises [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) and [Chocolatey](https://chocolatey.org/) for streamlined installation of required dependencies.
+- **Pokemon Terminal Decorations:** Includes [Pokemon-ColorScripts](https://github.com/pokeget/pokeget) for fun terminal decoration.
 - **Centralized Configuration:** Brings together scattered Windows configuration files into one organized location for easy access and management.
-- **Tailored Colour Scheme:** Powered by my very own [CYBERDREAM](https://github.com/scottmckendry/cyberdream.nvim) colourscheme - high-contrast and vibrant for optimal _Eye Stimulation™_.
+- **PowerShell Modules & Tools:** Automatically installs and configures PSReadLine, Terminal-Icons, Oh-My-Posh, Starship, and more.
+- **Improved Terminal Experience:** Configures Windows Terminal and WezTerm with optimized settings for productivity.
 
 ## ✅ Pre-requisites
 
@@ -46,20 +45,28 @@ My personal Windows-friendly dotfiles. Supports automatic installation of depend
 > [!WARNING]\
 > Under _**active development**_, expect changes. Existing configuration files will be overwritten. Please make a backup of any files you wish to keep before proceeding.
 
-1. Clone the repository to your preferred location.
-2. Run `Setup.ps1` from an elevated PowerShell prompt.
+1. Clone the repository to the C drive: `git clone https://github.com/username/Windots.git C:\Windots`
+2. Run `Setup.ps1` from an elevated PowerShell prompt: `cd C:\Windots`
+3. ```pwsh -ExecutionPolicy Bypass -File .\Setup.ps1```
+
+That's it! The script will automatically:
+
+- Install all required dependencies via Winget and Chocolatey
+- Install and configure PowerShell modules
+- Set up Pokemon-ColorScripts
+- Configure your PowerShell profile
+- Create symbolic links for all configuration files
+- Set up Windows Terminal, WezTerm, and other tools
 
 ## 🤝 Contributing
 
-Pull requests and issues are welcome. If you have any questions or suggestions, please open an issue or reach out to me on [Twitter](https://twitter.com/scott_mckendry).
+Pull requests and issues are welcome. If you have any questions or suggestions, please open an issue.
 
 ## 📸 Screenshots
 
-![image](https://github.com/user-attachments/assets/1d00e6a3-dd20-4abb-97f5-81df0363ff38)
-![image](https://github.com/user-attachments/assets/b51f1064-0e1a-4467-b308-9855ed275ed8)
-![image](https://github.com/user-attachments/assets/ce120611-981b-4b2f-a307-097212200d5f)
-![image](https://github.com/user-attachments/assets/bbb67965-4d95-4071-be0a-d3a58c4f1a14)
-![image](https://github.com/user-attachments/assets/729cdc6c-961e-46b6-b848-cc4b8ecb923d)
+![Terminal Preview](./previews/terminal.gif)
+![PowerShell Preview](./previews/powershell.png)
+![Windows Terminal Preview](./previews/windows-terminal.png)
 
 ---
 
